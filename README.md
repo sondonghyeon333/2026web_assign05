@@ -1,7 +1,5 @@
 # Week04 Solution - Spring Boot Memory CRUD
 
-완성 예제입니다. 학생 배포용보다는 교수/TA 확인용으로 사용하세요.
-
 ## API
 - POST `/api/books` -> 201
 - GET `/api/books` -> 200
