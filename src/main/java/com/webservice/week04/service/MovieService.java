@@ -20,6 +20,7 @@ public class MovieService {
 
     // 영화 등록: 클라이언트가 보낸 Request를 받아서 새 영화 객체로 만든 다음 저장하기
     public MovieResponse create(MovieRequest r) {
+        validateRequest(r); //잘못된 입력 처리
         Movie movie = new Movie(null, r.title(), r.director(), r.genre(), r.year(), r.price());
         return toResponse(repository.save(movie));
     }
@@ -36,6 +37,7 @@ public class MovieService {
 
     //  수정: id로 기존 영화 찾은 다음에 새로운 내용으로 바꾸기
     public MovieResponse update(Long id, MovieRequest r) {
+        validateRequest(r); // 잘못된 입력처리
         Movie m = findMovie(id);
         m.setTitle(r.title());
         m.setDirector(r.director());
@@ -55,7 +57,29 @@ public class MovieService {
     public long getMovieCount() {
         return repository.count();
     }
+    // Step 5 확장 기능 : 잘못된 입력 처리 등록/수정 시 값이 올바른지 검사하기
+    private void validateRequest(MovieRequest r) {
+        // 제목, 감독, 장르가 비어있거나 공백인 경우 -> 400 Bad Request
+        if (r.title() == null || r.title().isBlank()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "영화 제목은 필수입니다.");
+        }
+        if (r.director() == null || r.director().isBlank()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "감독명은 필수입니다.");
+        }
+        if (r.genre() == null || r.genre().isBlank()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "장르는 필수입니다.");
+        }
 
+        // 가격이 음수(-)인 경우 -> 400 Bad Request
+        if (r.price() < 0) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "가격은 음수일 수 없습니다.");
+        }
+
+        // 연도가 허용 범위를 벗어난 경우 : 1900년 이전 또는 미래 2100년 이후
+        if (r.year() < 1900 || r.year() > 2100) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "유효하지 않은 개봉 연도입니다.");
+        }
+    }
     // id로 영화 찾기
     private Movie findMovie(Long id) {
         return repository.findById(id).orElseThrow(() ->
